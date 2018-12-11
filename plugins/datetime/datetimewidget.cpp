@@ -55,11 +55,16 @@ void DatetimeWidget::set24HourFormat(const bool value)
 QSize DatetimeWidget::sizeHint() const
 {
     QFontMetrics fm(qApp->font());
+    const Dock::Position position = qApp->property(PROP_POSITION).value<Dock::Position>();
+    if (position == Dock::Top || position == Dock::Bottom) {
+        if (m_24HourFormat)
+            return fm.boundingRect("8888 / 88 / 88").size() + QSize(20, 10);
+        else
+            return fm.boundingRect("88:88 AA MON").size() + QSize(20, 20);
+    } else {
+        return fm.boundingRect("88:88AM").size() + QSize(20, 50);
+    }
 
-    if (m_24HourFormat)
-        return fm.boundingRect("88:88").size() + QSize(20, 10);
-    else
-        return fm.boundingRect("88:88 A.A.").size() + QSize(20, 20);
 }
 
 void DatetimeWidget::resizeEvent(QResizeEvent *e)
@@ -84,18 +89,23 @@ void DatetimeWidget::paintEvent(QPaintEvent *e)
     if (displayMode == Dock::Efficient)
     {
         QString format;
-        if (m_24HourFormat)
-            format = "hh:mm";
+        if (m_24HourFormat) {
+            if (position == Dock::Top || position == Dock::Bottom) {
+                format = "hh:mm ddd\nyyyy / MM / dd";
+            } else {
+                format = "hh:mm\nddd\nMM / dd";
+            }
+        }
         else
         {
             if (position == Dock::Top || position == Dock::Bottom)
-                format = "hh:mm AP";
+                format = "hh:mm AP ddd\nyyyy / MM / dd";
             else
-                format = "hh:mm\nAP";
+                format = "hh:mm\nAP ddd\nMM / dd";
         }
 
         painter.setPen(Qt::white);
-        painter.drawText(rect(), Qt::AlignCenter, current.time().toString(format));
+        painter.drawText(rect(), Qt::AlignCenter, current.toString(format));
         return;
     }
 
